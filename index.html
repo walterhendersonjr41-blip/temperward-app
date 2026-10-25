@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1720">
+<meta name="description" content="Temperward: a step-by-step life and job coach. Anyone. Any job. Day one.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Temperward</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="appbar" id="appbar">
+  <div class="brand"><img src="icons/icon-192.png" alt="" width="32" height="32"><span>Temperward</span></div>
+  <div class="appbar-r">
+    <span class="offline hidden" id="offlineBadge">Offline</span>
+    <button class="icon" id="btnHistory" aria-label="History">&#128197;</button>
+    <button class="icon" id="btnSettings" aria-label="Settings">&#9881;</button>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ================= TODAY / LIFE MODE ================= -->
+<section id="today" class="tab">
+  <div class="hero">
+    <h1 class="hero-t" data-i18n="hero">Anyone. Any job. Day one.</h1>
+    <p class="tag" id="greet" data-i18n="hero_sub">Pick it. Press Start. Just follow along.</p>
+  </div>
+  <button class="bigbtn" id="btnWhatNow">&#128483; <span data-i18n="what_now">What do I do now?</span></button>
+  <div class="nowcard hidden" id="nowCard" aria-live="polite"></div>
+  <div class="stats">
+    <div class="stat"><b id="streak">0</b><span data-i18n="day_streak">day streak</span></div>
+    <div class="stat"><b id="totalDone">0</b><span data-i18n="goals_done">goals finished</span></div>
+    <div class="stat"><b id="dayPct">0%</b><span id="dayPctLbl">of today</span></div>
+  </div>
+
+  <!-- Onboarding -->
+  <div class="panel hidden" id="onboard">
+    <h2 data-i18n="setup_title">Let's set up your day</h2>
+    <p class="small" data-i18n="setup_sub">Answer a few quick questions. You can change them later.</p>
+    <label for="obName" data-i18n="your_name">Your first name (optional)</label>
+    <input type="text" id="obName" autocomplete="given-name">
+    <div class="two">
+      <div><label for="obWake" data-i18n="wake">I wake up at</label><input type="time" id="obWake" value="07:00"></div>
+      <div><label for="obBed" data-i18n="bed">I go to bed at</label><input type="time" id="obBed" value="22:30"></div>
+    </div>
+    <label data-i18n="work_days">Days I work</label>
+    <div class="chips" id="obDays"></div>
+    <div class="two" id="obWorkTimes">
+      <div><label for="obWorkStart" data-i18n="work_from">Work starts</label><input type="time" id="obWorkStart" value="09:00"></div>
+      <div><label for="obWorkEnd" data-i18n="work_to">Work ends</label><input type="time" id="obWorkEnd" value="17:00"></div>
+    </div>
+    <label data-i18n="my_goals">What do you want help with?</label>
+    <div class="chips" id="obGoals"></div>
+    <label data-i18n="autonomy">How much should I take charge?</label>
+    <div class="seg" id="obAuto"></div>
+    <button class="start" id="btnSaveSetup" data-i18n="save_plan">Make my plan</button>
+  </div>
+
+  <!-- Life sections -->
+  <div id="life" class="hidden">
+    <div class="segscroll" id="lifeTabs" role="tablist"></div>
+
+    <div class="lsec" id="ls-plan">
+      <div class="rowsb"><h2 data-i18n="today_plan">Today's plan</h2><span class="pill" id="autoPill"></span></div>
+      <div class="prog"><div id="dayBar"></div></div>
+      <ul class="plan" id="planList"></ul>
+      <div class="row wrap">
+        <button class="btn2" id="btnReminders" data-i18n="reminders_on">Turn on reminders</button>
+        <button class="btn2" id="btnAiPlan" data-i18n="ai_plan">Make my plan smarter with AI</button>
+        <button class="btn2" id="btnEditSetup" data-i18n="edit_setup">Change my setup</button>
+      </div>
+      <p class="small" id="planNote"></p>
+    </div>
+
+    <div class="lsec hidden" id="ls-money">
+      <h2 data-i18n="sec_money">Money</h2>
+      <div class="panel">
+        <label for="income">Money coming in each month ($)</label>
+        <input type="number" inputmode="decimal" id="income" min="0" step="1">
+        <div class="budget" id="budgetBox"></div>
+      </div>
+      <div class="panel">
+        <h3>Bills</h3>
+        <ul class="list" id="billList"></ul>
+        <div class="formgrid">
+          <input type="text" id="billName" placeholder="Bill name (rent, phone...)" aria-label="Bill name">
+          <input type="number" inputmode="decimal" id="billAmt" placeholder="$ amount" aria-label="Bill amount">
+          <input type="number" inputmode="numeric" id="billDay" placeholder="Due day (1-31)" min="1" max="31" aria-label="Due day of month">
+          <button class="btn2" id="btnAddBill">+ Add bill</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Spending this month</h3>
+        <div class="formgrid">
+          <input type="text" id="spendWhat" placeholder="What (food, gas...)" aria-label="What you spent on">
+          <input type="number" inputmode="decimal" id="spendAmt" placeholder="$ amount" aria-label="Amount spent">
+          <button class="btn2" id="btnAddSpend">+ Add</button>
+        </div>
+        <ul class="list" id="spendList"></ul>
+      </div>
+    </div>
+
+    <div class="lsec hidden" id="ls-meals">
+      <h2 data-i18n="sec_meals">Meals</h2>
+      <div class="panel">
+        <label for="pantry">What food do you have? (e.g. rice, eggs, beans)</label>
+        <div class="row"><input type="text" id="pantry"><button class="btn2" id="btnMealIdeas">Ideas</button></div>
+        <ul class="list" id="mealList"></ul>
+        <p class="small" id="mealNote"></p>
+      </div>
+    </div>
+
+    <div class="lsec hidden" id="ls-health">
+      <h2 data-i18n="sec_health">Health</h2>
+      <div class="panel">
+        <h3>Water today</h3>
+        <div class="water" id="waterCups"></div>
+        <div class="row"><button class="btn2 grow" id="btnWater">+ 1 glass</button><button class="btn2" id="btnWaterMinus" aria-label="Remove a glass">&minus;</button></div>
+      </div>
+      <div class="panel">
+        <h3>Medicine reminders</h3>
+        <ul class="list" id="medList"></ul>
+        <div class="formgrid">
+          <input type="text" id="medName" placeholder="Medicine name" aria-label="Medicine name">
+          <input type="time" id="medTime" value="08:00" aria-label="Time to take it">
+          <button class="btn2" id="btnAddMed">+ Add</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Sleep</h3>
+        <p class="small" id="sleepGoal"></p>
+        <div class="row"><input type="number" inputmode="decimal" id="sleepHrs" placeholder="Hours slept last night" min="0" max="24" step="0.5" aria-label="Hours slept"><button class="btn2" id="btnSleep">Save</button></div>
+        <div class="bars" id="sleepBars"></div>
+      </div>
+    </div>
+
+    <div class="lsec hidden" id="ls-home">
+      <h2 data-i18n="sec_home">Home</h2>
+      <div class="panel"><h3>Today's chore</h3><div id="choreToday"></div></div>
+      <div class="panel"><h3>This week</h3><ul class="list" id="choreWeek"></ul></div>
+    </div>
+
+    <div class="lsec hidden" id="ls-family">
+      <h2 data-i18n="sec_family">Family</h2>
+      <div class="panel">
+        <ul class="list" id="famList"></ul>
+        <div class="formgrid">
+          <input type="text" id="famName" placeholder="Name" aria-label="Name">
+          <input type="tel" id="famPhone" placeholder="Phone (optional)" aria-label="Phone">
+          <input type="text" id="famBday" placeholder="Birthday MM-DD" aria-label="Birthday month and day" pattern="\d{2}-\d{2}">
+          <button class="btn2" id="btnAddFam">+ Add person</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lsec hidden" id="ls-work">
+      <h2 data-i18n="sec_work">Work</h2>
+      <div class="panel" id="workSched"></div>
+      <div class="panel"><h3>Job guides</h3><div class="minigrid" id="workGuides"></div></div>
+      <div class="panel"><h3>Find work</h3>
+        <ul class="links">
+          <li><a href="https://www.careeronestop.org" target="_blank" rel="noopener">CareerOneStop &mdash; free job centers</a></li>
+          <li><a href="https://www.indeed.com" target="_blank" rel="noopener">Indeed jobs</a></li>
+          <li><a href="https://www.google.com/search?q=jobs+near+me" target="_blank" rel="noopener">Jobs near me (Google)</a></li>
+        </ul>
+        <button class="btn2 full" data-goto="hire">Try Hands-for-Hire (demo)</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PICK AND START ================= -->
+<section id="pick" class="tab hidden">
+  <h1 class="h1" >Pick and Start</h1>
+  <p class="tag">Pick a guide. Press Start. Just follow along.</p>
+  <input type="search" id="goalSearch" data-i18n-ph="search" placeholder="Search guides..." aria-label="Search guides">
+  <div class="segscroll" id="catChips" role="tablist" aria-label="Categories"></div>
+  <div class="grid" id="goals"></div>
+  <p class="small center hidden" id="noMatch">No guide matches. Type it below and press Use.</p>
+  <div class="row">
+    <input type="text" id="customGoal" data-i18n-ph="type_goal" placeholder="Type your own goal..." aria-label="Type your own goal">
+    <button class="btn2" id="btnMake" data-i18n="use">Use</button>
+  </div>
+  <button class="camBtn" id="btnCamHome">&#128247; Camera Coach</button>
+  <div id="camSlotHome"></div>
+  <div class="startbar" id="startBar">
+    <div class="chosen" id="chosen" data-i18n="pick_goal">Pick a goal above.</div>
+    <button class="start" id="btnStart" disabled data-i18n="start">START</button>
+  </div>
+</section>
+
+<!-- ================= RISE ================= -->
+<section id="rise" class="tab hidden">
+  <h1 class="h1" data-i18n="rise_title">Rise</h1>
+  <p class="tag" data-i18n="rise_sub">Six stages. One step at a time. You can do this.</p>
+  <div class="stats">
+    <div class="stat"><b id="riseStage">1</b><span data-i18n="stage">Stage</span></div>
+    <div class="stat"><b id="risePct">0%</b><span>done</span></div>
+    <div class="stat"><b id="riseStreak">0</b><span data-i18n="day_streak">day streak</span></div>
+  </div>
+  <div class="panel accent" id="riseToday"></div>
+  <div id="riseStages"></div>
+  <div class="panel">
+    <h3 data-i18n="resources">Find help near you</h3>
+    <ul class="links" id="riseLinks"></ul>
+    <p class="small">Call or text <b>988</b> any time if you're in crisis. Dial <b>2-1-1</b> for local help.</p>
+  </div>
+</section>
+
+<!-- ================= HANDS-FOR-HIRE ================= -->
+<section id="hire" class="tab hidden">
+  <h1 class="h1" data-i18n="hire_title">Hands-for-Hire</h1>
+  <div class="demo" role="note" data-i18n="demo_banner">Demo &mdash; no real payments</div>
+  <div class="seg" id="hireRole" role="tablist">
+    <button data-role="worker" class="on" data-i18n="worker">Worker</button>
+    <button data-role="business" data-i18n="business">Business</button>
+  </div>
+  <div id="hireWorker">
+    <div class="panel profile">
+      <div class="rowsb"><input type="text" id="wName" aria-label="Your name" placeholder="Your name"><span class="pill ok">&#10003; ID checked (demo)</span></div>
+      <div class="chips" id="wSkills"></div>
+      <div class="stats tight">
+        <div class="stat"><b id="wEarn">$0</b><span data-i18n="earnings">Earned</span></div>
+        <div class="stat"><b id="wDone">0</b><span data-i18n="jobs_done">Jobs done</span></div>
+        <div class="stat"><b>4.9&#9733;</b><span>rating</span></div>
+      </div>
+    </div>
+    <h2 data-i18n="my_jobs">My jobs</h2>
+    <ul class="jobs" id="myJobs"></ul>
+    <h2 data-i18n="avail_jobs">Available jobs</h2>
+    <ul class="jobs" id="availJobs"></ul>
+  </div>
+  <div id="hireBiz" class="hidden">
+    <div class="panel"><div class="rowsb"><b data-i18n="wallet">Demo wallet</b><b id="bizWallet">$0</b></div><p class="small" id="bizEscrow"></p></div>
+    <div class="panel">
+      <h3 data-i18n="post_job">Post a job</h3>
+      <label for="pjTitle" data-i18n="job_title">Job title</label><input type="text" id="pjTitle" placeholder="e.g. Clean break room">
+      <div class="two">
+        <div><label for="pjPay" data-i18n="pay">Pay ($)</label><input type="number" inputmode="decimal" id="pjPay" value="40" min="1"></div>
+        <div><label for="pjSop" data-i18n="sop">Steps (pick a guide)</label><select id="pjSop"></select></div>
+      </div>
+      <label for="pjSteps" data-i18n="custom_steps">Or type your own steps, one per line</label>
+      <textarea id="pjSteps" rows="4"></textarea>
+      <button class="start" id="btnPostJob" data-i18n="post">Post job &amp; hold pay</button>
+    </div>
+    <h2 data-i18n="your_jobs">Your posted jobs</h2>
+    <ul class="jobs" id="bizJobs"></ul>
+    <h2 data-i18n="workers">Workers</h2>
+    <ul class="list" id="bizWorkers"></ul>
+  </div>
+</section>
+
+<!-- ================= COACH ================= -->
+<section id="coach" class="tab hidden">
+  <h1 class="h1" data-i18n="coach_title">Coach</h1>
+  <p class="tag" data-i18n="coach_sub">The coach watches through your camera and talks you through it.</p>
+  <div class="seg" id="outMode" role="radiogroup" aria-label="Voice output">
+    <button data-out="earbud" id="modeEarbud" role="radio">&#127911; <span data-i18n="earbud">Earbud mode</span></button>
+    <button data-out="speaker" id="modeSpeaker" role="radio">&#128226; <span data-i18n="speaker">Speaker mode</span></button>
+  </div>
+  <p class="small" id="outModeNote"></p>
+  <button class="camBtn" id="btnCamCoach">&#128247; Camera Coach</button>
+  <div id="camSlotCoach"></div>
+  <button class="btn2 full" data-goto="pick" data-i18n="run_guide_cam">Run a guide with the coach</button>
+  <div class="panel" id="speakerPanel">
+    <h3 data-i18n="say_to">Say to someone</h3>
+    <div class="chips" id="phraseChips"></div>
+    <label for="sayText">Type what to say</label>
+    <input type="text" id="sayText" placeholder="Hello, how can I help you?">
+    <label for="sayLang">In this language</label>
+    <select id="sayLang">
+      <option value="en-US">English</option><option value="es-US" selected>Spanish</option><option value="fr-FR">French</option>
+      <option value="pt-BR">Portuguese</option><option value="zh-CN">Chinese</option><option value="vi-VN">Vietnamese</option><option value="ar-SA">Arabic</option>
+    </select>
+    <button class="start" id="btnSayIt" data-i18n="say_it">Say it out loud</button>
+    <p class="big2" id="sayOut" aria-live="polite"></p>
+    <p class="small">Translation: Spanish phrases above work offline. Anything else uses your Gemini key.</p>
+  </div>
+  <div class="panel">
+    <h3>Bluetooth earbuds</h3>
+    <p class="small">Temperward talks through whatever your phone is using for sound. Pair your earbuds in Android Settings &rarr; Bluetooth and the coach's voice goes to them automatically. Take them out (or switch to Speaker mode) to talk out loud.</p>
+  </div>
+</section>
+
+<!-- ================= DEVICES ================= -->
+<section id="devices" class="tab hidden">
+  <h1 class="h1" data-i18n="devices_title">Devices</h1>
+  <div class="panel">
+    <h3>&#8986; Watch &amp; buzz</h3>
+    <label class="check"><input type="checkbox" id="hapticsOn"><span data-i18n="haptics">Buzz on each step (watch-style)</span></label>
+    <button class="btn2 full" id="btnTestBuzz" data-i18n="test_buzz">Test buzz</button>
+    <p class="small">One short buzz = new step. Three = done. Long buzzes = danger. If your phone has no buzz motor, nothing happens.</p>
+  </div>
+  <div class="panel">
+    <h3>&#128083; Small screens</h3>
+    <div class="two">
+      <button class="btn2 tall" id="btnWatchView">&#8986;<br><span data-i18n="watch_view">Watch view</span></button>
+      <button class="btn2 tall" id="btnHudView">&#128083;<br><span data-i18n="hud_view">Glasses HUD view</span></button>
+    </div>
+    <p class="small">Watch view: big step and a big Next button, for a small screen or a phone on your wrist. HUD view: high contrast, huge text, for glasses-style displays.</p>
+  </div>
+  <div class="panel camcard">
+    <div class="rowsb"><h3>&#127909; <span data-i18n="cam_title">Temperward Cam</span></h3><span class="pill warn" data-i18n="coming_soon">Coming soon</span></div>
+    <p>A small clip-on camera for your shirt or hat. It pairs with your phone and earbud so the coach can see your work hands-free, and it has a speaker so the coach can talk out loud when needed.</p>
+    <ul class="bul"><li>Clips on in one second</li><li>Works with your phone and earbuds</li><li>Speaker for talking to customers</li><li>Big light shows when it's recording</li></ul>
+    <p class="small">Not for sale yet. Today, your phone camera does the same job: try the Coach tab.</p>
+    <label for="wlName">Name</label><input type="text" id="wlName">
+    <label for="wlContact">Email or phone (optional)</label><input type="text" id="wlContact">
+    <button class="start" id="btnWaitlist" data-i18n="join_waitlist">Join the waitlist</button>
+    <p class="small" id="wlNote"></p>
+  </div>
+</section>
+
+<!-- ================= RUN (guide player, also used for jobs) ================= -->
+<section id="run" class="hidden">
+  <div class="topbar">
+    <button class="icon" id="btnExit" aria-label="Exit">&#10005;</button>
+    <div id="runTitle" class="runtitle"></div>
+    <button class="icon" id="btnWatch" aria-label="Watch view">&#8986;</button>
+    <button class="icon" id="btnMute" aria-label="Mute voice">&#128266;</button>
+  </div>
+  <div class="jobbanner hidden" id="jobBanner"></div>
+  <div class="prog"><div id="progBar"></div></div>
+  <div id="camSlotRun"></div>
+  <div class="rowsb"><div class="stepnum" id="stepNum"></div><span class="pill hidden" id="camBadge">&#128247; check with camera</span></div>
+  <div class="steptext" id="stepText" aria-live="polite"></div>
+  <div class="safety hidden" id="safetyNote" role="note"></div>
+  <div class="timer hidden" id="timerBox">
+    <div class="t" id="timerT">0:00</div>
+    <div class="row" style="justify-content:center">
+      <button class="btn2" id="btnTimer">Start timer</button>
+      <button class="btn2" id="btnTimerReset">Reset</button>
+    </div>
+  </div>
+  <div class="ctrl">
+    <button class="next" id="btnNext">Next &#9654;</button>
+    <button id="btnRepeat">&#8635; Repeat</button>
+    <button id="btnBack">&#9664; Back</button>
+    <button id="btnPause">&#10074;&#10074; Pause</button>
+    <button id="btnSkip">Skip &#9197;</button>
+  </div>
+  <div class="voicebar">
+    <span id="micStatus">Voice commands off</span>
+    <button class="btn2" id="btnMic" style="min-height:44px">&#127908; Voice</button>
+  </div>
+  <button class="camBtn" id="btnCamRun">&#128247; Camera Coach</button>
+</section>
+
+<!-- ================= DONE ================= -->
+<section id="done" class="hidden">
+  <div class="done">
+    <div class="big">&#10003;</div>
+    <h2 data-i18n="you_did_it">You did it.</h2>
+    <p id="doneMsg" class="tag"></p>
+    <div class="stats">
+      <div class="stat"><b id="streak2">0</b><span data-i18n="day_streak">day streak</span></div>
+      <div class="stat"><b id="totalDone2">0</b><span data-i18n="goals_done">goals finished</span></div>
+    </div>
+    <button class="start" id="btnHome" data-i18n="back_home">Back</button>
+  </div>
+</section>
+
+<!-- ================= JOB FINISH (proof + submit) ================= -->
+<section id="jobDone" class="hidden">
+  <h1 class="h1">Finish the job</h1>
+  <div class="demo">Demo &mdash; no real payments</div>
+  <div class="panel" id="jdSummary"></div>
+  <div class="panel">
+    <h3>Proof photo</h3>
+    <p class="small">Take a photo of the finished work. If the camera coach checked every step, no photo is needed.</p>
+    <div class="proofbox"><img id="proofImg" alt="Proof photo" class="hidden"><span id="proofEmpty">No photo yet</span></div>
+    <button class="btn2 full" id="btnProof">&#128248; Take proof photo</button>
+    <input type="file" id="proofFile" accept="image/*" capture="environment" class="hidden">
+  </div>
+  <button class="start" id="btnSubmitJob">Submit for payment</button>
+  <p class="small center" id="jdNote"></p>
+</section>
+
+<!-- ================= PAID ================= -->
+<section id="paid" class="hidden">
+  <div class="done">
+    <div class="big">&#128176;</div>
+    <h2 id="paidTitle">Payment released</h2>
+    <p class="tag" id="paidMsg"></p>
+    <div class="demo">Demo &mdash; no real payments</div>
+  </div>
+  <div class="panel"><h3>Job receipt</h3><div id="paidReceipt"></div></div>
+  <button class="start" id="btnPaidBack">Back to jobs</button>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section id="history" class="hidden">
+  <div class="topbar"><h1 class="h1">History</h1><button class="icon" data-home aria-label="Close">&#10005;</button></div>
+  <div class="panel"><ul class="hist" id="histList"></ul></div>
+  <button class="btn2 full" id="btnClearHist">Clear history</button>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section id="settings" class="hidden">
+  <div class="topbar"><h1 class="h1" data-i18n="settings">Settings</h1><button class="icon" data-home aria-label="Close">&#10005;</button></div>
+  <div class="panel">
+    <h3>Look &amp; language</h3>
+    <label for="langSel" data-i18n="lang">Language</label>
+    <select id="langSel"><option value="en">English</option><option value="es">Espa&ntilde;ol</option></select>
+    <label class="check"><input type="checkbox" id="largeText"><span data-i18n="large_text">Large text</span></label>
+    <p class="small">Spanish changes the buttons and main screens. Built-in guides are in English for now; custom AI guides follow your language.</p>
+  </div>
+  <div class="panel">
+    <h3>Voice</h3>
+    <label for="rate">Speaking speed: <span id="rateVal"></span></label>
+    <input type="range" id="rate" min="0.6" max="1.2" step="0.05">
+    <label for="voiceSel">Voice</label>
+    <select id="voiceSel"></select>
+    <button class="btn2 full" id="btnTestVoice">Test voice</button>
+  </div>
+  <div class="panel">
+    <h3>AI (optional)</h3>
+    <p class="small">Paste a free Gemini API key to turn any custom goal into real steps, make your day plan smarter, translate, and turn on live camera coaching. The key is saved only on this device and sent only to Google's Gemini API. Without a key, everything still works with the built-in guides.</p>
+    <div class="row"><input type="password" id="apiKey" placeholder="Gemini API key" autocomplete="off"><button class="btn2" id="btnSaveKey">Save</button></div>
+    <button class="btn2 full" id="btnClearKey">Remove key</button>
+  </div>
+  <div class="panel">
+    <h3>Life Mode</h3>
+    <label for="autonomySel" data-i18n="autonomy">How much should I take charge?</label>
+    <select id="autonomySel"><option value="suggest">Suggest</option><option value="do">Do and tell</option><option value="run">Run my day (within my rules)</option></select>
+    <button class="btn2 full" id="btnNotif">&#128276; Allow reminders</button>
+    <p class="small" id="notifNote"></p>
+  </div>
+  <div class="panel">
+    <h3>Camera Coach</h3>
+    <label class="check"><input type="checkbox" id="coachOn">Live AI coaching (needs Gemini key)</label>
+    <label for="camInt">Check the camera every <span id="camIntVal"></span> seconds</label>
+    <input type="range" id="camInt" min="3" max="10" step="1">
+    <label class="check"><input type="checkbox" id="autoAdv">Auto-advance when the coach sees a step is done</label>
+  </div>
+  <div class="panel">
+    <h3 data-i18n="privacy">Privacy</h3>
+    <p class="small"><b>Everything stays on this phone.</b> Your plan, money, health notes, contacts, Rise progress, and jobs are saved only in this browser. Nothing is uploaded unless you add a Gemini key: then only the text of a custom goal or plan request, or a small camera snapshot while live coaching is on, is sent to Google Gemini. Camera frames are never saved. Stop camera turns the camera fully off.</p>
+  </div>
+  <div class="panel">
+    <h3 data-i18n="data">Your data</h3>
+    <label class="check"><input type="checkbox" id="exportKey">Include my Gemini key in the backup</label>
+    <button class="btn2 full" id="btnExport" data-i18n="export">Export backup</button>
+    <label class="btn2 full filebtn" for="importFile"><span data-i18n="import">Import backup</span></label>
+    <input type="file" id="importFile" accept="application/json,.json" class="vh">
+    <button class="btn2 full danger" id="btnReset" data-i18n="reset">Erase everything</button>
+    <p class="small" data-i18n="offline_ok">Works offline. Everything is saved on this phone.</p>
+    <p class="small" id="verNote"></p>
+  </div>
+</section>
+
+<footer>Prototype - concept by Walter Henderson Jr.</footer>
+</main>
+
+<nav class="tabbar" id="tabbar" aria-label="Main">
+  <button data-tab="today" class="on"><span class="ti">&#9728;</span><span data-i18n="nav_today">Today</span></button>
+  <button data-tab="pick"><span class="ti">&#9654;</span><span data-i18n="nav_pick">Pick</span></button>
+  <button data-tab="rise"><span class="ti">&#127775;</span><span data-i18n="nav_rise">Rise</span></button>
+  <button data-tab="hire"><span class="ti">&#129309;</span><span data-i18n="nav_hire">Hire</span></button>
+  <button data-tab="coach"><span class="ti">&#128247;</span><span data-i18n="nav_coach">Coach</span></button>
+  <button data-tab="devices"><span class="ti">&#8986;</span><span data-i18n="nav_devices">Devices</span></button>
+</nav>
+
+<!-- CAMERA COACH PANEL (moved into Pick, Coach, or Run screen) -->
+<div class="cam hidden" id="camPanel">
+  <div class="camhead">
+    <span class="camon" id="camOn"><i></i>CAMERA ON</span>
+    <span class="outtag" id="outTag"></span>
+    <span class="coachmode" id="coachMode">Mirror mode</span>
+  </div>
+  <div class="vidwrap">
+    <video id="camVideo" playsinline muted autoplay></video>
+    <span class="thinking hidden" id="camThinking">Coach is looking&hellip;</span>
+  </div>
+  <div class="hazard hidden" id="hazardBanner" role="alert"></div>
+  <div class="coachline" id="coachLine" aria-live="polite"></div>
+  <button class="doneoffer hidden" id="btnDoneOffer">Looks done &mdash; Next &#9654;</button>
+  <div class="coachnote hidden" id="coachNote"></div>
+  <div class="camctl">
+    <button class="ask" id="btnAsk">&#128065; Ask the coach</button>
+    <button id="btnFlip">&#128260; Flip</button>
+    <button class="stop" id="btnCamStop">&#9632; Stop camera</button>
+  </div>
+</div>
+
+<!-- WATCH / HUD overlay -->
+<div class="watch hidden" id="watchView" role="dialog" aria-label="Watch view">
+  <button class="wclose" id="wClose" aria-label="Close">&#10005;</button>
+  <div class="wnum" id="wNum"></div>
+  <div class="wstep" id="wStep"></div>
+  <div class="wbtns"><button id="wBack" aria-label="Back">&#9664;</button><button class="wnext" id="wNext">Next &#9654;</button></div>
+</div>
+
+<!-- Sheet (how-to, receipts) -->
+<div class="sheetbg hidden" id="sheetBg"></div>
+<div class="sheet hidden" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="rowsb"><h2 id="sheetTitle"></h2><button class="icon" id="sheetClose" aria-label="Close">&#10005;</button></div>
+  <div id="sheetBody"></div>
+</div>
+
+<div class="celebrate hidden" id="celebrate" role="alert"><div class="cbox"><div class="big">&#127881;</div><h2 id="celebrateT"></h2><p id="celebrateP"></p><button class="start" id="celebrateOk">Keep rising</button></div></div>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/life.js"></script>
+<script src="js/rise.js"></script>
+<script src="js/hire.js"></script>
+</body>
+</html>

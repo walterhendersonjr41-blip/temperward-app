@@ -248,7 +248,7 @@ async function sayIt(){
     const prev = TW.outMode; TW.outMode = "speaker"; speak(out, null, {lang:code}); TW.outMode = prev;
   }catch(e){
     $("sayOut").textContent = "";
-    toast(e.code==="nokey" ? "That phrase needs a Gemini key (Settings). The phrases above work without one." : TW.geminiMsg(e));
+    toast(TW.geminiMsg(e));
   }
 }
 $("btnSayIt").onclick = sayIt;

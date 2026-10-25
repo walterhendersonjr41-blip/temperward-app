@@ -1,5 +1,5 @@
 /* Temperward service worker: offline app shell. Bump VERSION when files change. */
-const VERSION = "tw-v3.0.0";
+const VERSION = "tw-v3.1.0";
 const SHELL = ["./","index.html","manifest.webmanifest","css/app.css",
   "js/data.js","js/i18n.js","js/app.js","js/coach.js","js/life.js","js/rise.js","js/hire.js",
   "icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","icons/apple-touch-icon.png"];

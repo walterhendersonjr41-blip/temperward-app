@@ -169,7 +169,6 @@ function onGuideDone(name){
 }
 async function aiPlan(){
   const p = profile(); if(!p){ toast("Set up your day first."); return; }
-  if(!TW.hasKey()){ toast("Add a free Gemini key in Settings for an AI plan. The simple plan works without it."); return; }
   const btn = $("btnAiPlan"); btn.disabled = true; btn.textContent = "Thinking\u2026";
   const d = new Date();
   const ids = TW.TEMPLATES.map(x=>x.id+" ("+x.name+")").join(", ");
@@ -277,8 +276,8 @@ function renderMeals(extra){
 async function mealIdeas(){
   LS.set("pantry", $("pantry").value.trim());
   renderMeals();
-  if(!TW.hasKey() || !$("pantry").value.trim()){ $("mealNote").textContent = TW.hasKey() ? "Type what food you have for better ideas." : "Add a Gemini key in Settings for more ideas from your exact food."; return; }
-  $("mealNote").textContent = "Getting more ideas\u2026";
+  if(!$("pantry").value.trim()){ $("mealNote").textContent = "Type what food you have for better ideas."; return; }
+  $("mealNote").textContent = "Getting more ideas\u2026 (free AI, can take up to a minute)";
   try{
     const out = TW.parseJSON(await TW.gemini(`Suggest 3 cheap, simple meals someone can cook with mostly these foods: ${$("pantry").value}. Basic kitchen only. For each, give 6 to 10 short plain-English steps (under 20 words each), including times like "10 minutes" when waiting. Reply ONLY JSON: [{"name":"...","steps":["..."]}]`, {temperature:0.6}));
     const list = (Array.isArray(out)?out:[]).filter(x=>x && x.name && Array.isArray(x.steps) && x.steps.length>=3).slice(0,3)

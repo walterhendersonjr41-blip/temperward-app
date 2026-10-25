@@ -75,6 +75,7 @@
       <div class="row wrap">
         <button class="btn2" id="btnReminders" data-i18n="reminders_on">Turn on reminders</button>
         <button class="btn2" id="btnAiPlan" data-i18n="ai_plan">Make my plan smarter with AI</button>
+        <p class="small">Free AI, no key needed. It can make mistakes. Not medical or financial advice. Always follow your doctor's medicine directions.</p>
         <button class="btn2" id="btnEditSetup" data-i18n="edit_setup">Change my setup</button>
       </div>
       <p class="small" id="planNote"></p>
@@ -282,7 +283,7 @@
     </select>
     <button class="start" id="btnSayIt" data-i18n="say_it">Say it out loud</button>
     <p class="big2" id="sayOut" aria-live="polite"></p>
-    <p class="small">Translation: Spanish phrases above work offline. Anything else uses your Gemini key.</p>
+    <p class="small">Translation: Spanish phrases above work offline. Anything else uses the free AI (or your Gemini key if you added one).</p>
   </div>
   <div class="panel">
     <h3>Bluetooth earbuds</h3>
@@ -423,7 +424,7 @@
   </div>
   <div class="panel">
     <h3>AI (optional)</h3>
-    <p class="small">Paste a free Gemini API key to turn any custom goal into real steps, make your day plan smarter, translate, and turn on live camera coaching. The key is saved only on this device and sent only to Google's Gemini API. Without a key, everything still works with the built-in guides.</p>
+    <p class="small">AI steps, AI day plans, meal ideas and translation already work free with no key (using the free Pollinations AI). Paste a free Gemini API key for faster answers and to turn on live camera coaching. The key is saved only on this device and sent only to Google's Gemini API.</p>
     <div class="row"><input type="password" id="apiKey" placeholder="Gemini API key" autocomplete="off"><button class="btn2" id="btnSaveKey">Save</button></div>
     <button class="btn2 full" id="btnClearKey">Remove key</button>
   </div>
@@ -443,7 +444,7 @@
   </div>
   <div class="panel">
     <h3 data-i18n="privacy">Privacy</h3>
-    <p class="small"><b>Everything stays on this phone.</b> Your plan, money, health notes, contacts, Rise progress, and jobs are saved only in this browser. Nothing is uploaded unless you add a Gemini key: then only the text of a custom goal or plan request, or a small camera snapshot while live coaching is on, is sent to Google Gemini. Camera frames are never saved. Stop camera turns the camera fully off.</p>
+    <p class="small"><b>Everything stays on this phone.</b> Your plan, money, health notes, contacts, Rise progress, and jobs are saved only in this browser. Nothing is uploaded except when you tap an AI button: then only the text of that request (a custom goal, plan, food list or phrase) is sent to the free Pollinations AI, or to Google Gemini if you added a key. A small camera snapshot is sent to Gemini only while live coaching is on with your key. Camera frames are never saved. Stop camera turns the camera fully off.</p>
   </div>
   <div class="panel">
     <h3 data-i18n="data">Your data</h3>

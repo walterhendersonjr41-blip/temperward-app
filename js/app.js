@@ -107,9 +107,13 @@ const sleep = ms => new Promise(r=>setTimeout(r, ms));
 TW.gemini = async function(parts, o){
   o = o || {};
   const key = LS.get("apiKey","");
-  if(!key) throw gErr("nokey");
   if(navigator.onLine === false) throw gErr("offline");
   if(typeof parts === "string") parts = [{text:parts}];
+  if(!key){
+    // No key: text requests use the free, keyless Pollinations AI. Pictures still need a Gemini key.
+    if(parts.some(p=>p.inline_data||p.inlineData)) throw gErr("nokey");
+    return TW.freeAI(parts.map(p=>p.text||"").join("\n"), o);
+  }
   const retries = o.retries==null ? 2 : o.retries;
   const gen = {temperature:o.temperature==null?0.4:o.temperature, thinkingConfig:{thinkingBudget:0}};
   if(o.json!==false) gen.responseMimeType = "application/json";
@@ -137,20 +141,49 @@ TW.gemini = async function(parts, o){
   }
   throw gErr("network");
 };
+/* Free keyless text AI (Pollinations). Used when no Gemini key is saved. */
+TW.freeAI = async function(prompt, o){
+  o = o || {};
+  const sys = o.json===false ? "You are a kind, practical helper. Use plain, simple words." : "You are a kind, practical helper. Reply with ONLY valid JSON, no other text.";
+  const clean = t => String(t||"").replace(/\n*-{3,}[\s\S]*$/,"").replace(/\*\*Sponsor[\s\S]*$/i,"").trim();
+  let wait = 3000;
+  for(let attempt=0; attempt<3; attempt++){
+    const ctl = new AbortController(), to = setTimeout(()=>ctl.abort(), 45000);
+    try{
+      const r = await fetch("https://text.pollinations.ai/openai", {method:"POST", signal:ctl.signal, headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({model:"openai", private:true, referrer:"temperward", reasoning_effort:"low", messages:[{role:"system",content:sys},{role:"user",content:prompt}]})});
+      if(r.ok){ const j = await r.json(); const txt = clean((((j.choices||[])[0]||{}).message||{}).content); if(txt) return txt; }
+    }catch(e){}
+    finally{ clearTimeout(to); }
+    if(attempt<2){ await sleep(wait); wait = 8000; }
+  }
+  // Last chance: the simple GET endpoint.
+  try{
+    const ctl = new AbortController(), to = setTimeout(()=>ctl.abort(), 45000);
+    const r = await fetch("https://text.pollinations.ai/"+encodeURIComponent(prompt.slice(0,3000))+"?model=openai&private=true&referrer=temperward&system="+encodeURIComponent(sys), {signal:ctl.signal});
+    clearTimeout(to); if(r.ok){ const txt = clean(await r.text()); if(txt) return txt; }
+  }catch(e){}
+  throw gErr("busy");
+};
 TW.geminiMsg = function(e){
   const c = e && e.code;
   return c==="nokey" ? "Add a free Gemini key in Settings for AI help." :
     c==="offline" ? "You're offline. Using built-in help." :
     c==="badkey" ? "Your Gemini key didn't work. Check it in Settings." :
-    c==="busy" ? "AI is busy right now (free limit). Using built-in help." :
+    c==="busy" ? "The free AI is busy right now. Using built-in help. Try again in a minute." :
     c==="timeout" ? "AI took too long. Using built-in help." :
     "AI didn't answer. Using built-in help.";
 };
 TW.parseJSON = function(txt){
   txt = String(txt||"").replace(/^\s*```(json)?/i,"").replace(/```\s*$/,"").trim();
   try{ return JSON.parse(txt); }catch(e){}
+  const fix = x => x.replace(/true\|false/g,"false").replace(/,\s*([\]}])/g,"$1");
   const m = /\[[\s\S]*\]|\{[\s\S]*\}/.exec(txt); if(!m) throw new Error("bad json");
-  return JSON.parse(m[0]);
+  try{ return JSON.parse(fix(m[0])); }catch(e){}
+  // Last try: pick out each {...} object one by one (free AI sometimes adds extra text).
+  const objs = []; (fix(txt).match(/\{[^{}]*\}/g)||[]).forEach(o=>{ try{ objs.push(JSON.parse(o)); }catch(e){} });
+  if(objs.length) return objs;
+  throw new Error("bad json");
 };
 
 /* ---------- Navigation ---------- */
@@ -273,8 +306,8 @@ async function makeCustom(){
   $("goals").querySelectorAll(".goal").forEach(x=>x.classList.remove("sel"));
   const exact = TEMPLATES.find(g=>g.name.toLowerCase()===goal.toLowerCase());
   if(exact){ choose({id:exact.id, name:exact.name, steps:exact.steps}); return; }
-  if(TW.hasKey() && navigator.onLine !== false){
-    $("chosen").textContent = "Making your steps...";
+  if(navigator.onLine !== false){
+    $("chosen").textContent = "Making your steps... (the free AI can take up to a minute)";
     $("btnStart").disabled = true;
     try{ const steps = await aiSteps(goal); choose({id:"custom", name:goal, steps}); return; }
     catch(e){ toast(e.code ? TW.geminiMsg(e) : "AI didn't answer, so here's a simple plan instead."); }
